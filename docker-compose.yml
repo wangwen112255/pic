@@ -1,0 +1,61 @@
+version: "3"
+services:
+ # PHP
+  api:
+    # 引用的镜像
+    image: registry.mayishanglian.com/php/coffee:0.3
+    volumes:
+      - ./coffee:/var/www/html/
+      - ./php.ini-production:/usr/local/etc/php/php.ini
+      - ./default.conf:/etc/nginx/http.d/default.conf
+      - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
+    # 总是重启
+    restart: "always"
+    links:
+      - mysql
+      - redis
+    depends_on:
+      - mysql
+      - redis
+    ports:
+     - 80:80
+    stdin_open: true
+    #command: tail -f /var/www/html/404.html
+    tty: true
+    networks:
+      - coffee
+
+  mysql:
+    container_name: mysql
+    restart: always
+    image: mysql:5.6
+    ports:
+      - 3311:3306
+    volumes:
+      - ./mysql/conf/my.cnf:/etc/my.cnf
+      - ./mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: coffee_dev
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: 123456
+    networks:
+      - coffee
+  redis:
+    container_name: redis
+    restart: always
+    image: redis:6.2.6
+    ports:
+      - 6371:6379
+    volumes:
+      - ./redis/conf/redis.cnf:/etc/redis/redis.conf
+      - ./redis/data:/data
+    entrypoint: [ "redis-server","/etc/redis/redis.conf"]
+    networks:
+      - coffee
+
+networks:
+  coffee:
+    driver: bridge
+
+
